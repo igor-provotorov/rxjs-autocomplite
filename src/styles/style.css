@@ -1,0 +1,10 @@
+body {
+    box-sizing: border-box;
+}
+.container {
+    margin-top: 30px;
+}
+
+li {
+    padding: 10px;
+}
