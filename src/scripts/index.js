@@ -1,8 +1,8 @@
-import { fromEvent, of } from 'rxjs';
+import { fromEvent, of, from, combineLatest, Observable } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
-import { debounceTime, distinctUntilChanged, map, switchMap, tap, catchError } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, switchMap, tap, catchError, combineAll } from 'rxjs/operators';
 
-import { getSearchUrl } from './helpers/getSearchUrl';
+import { getUsersSearchUrl, getReposSearchUrl } from './helpers/getSearchUrl';
 import { HALF_SECOND_DELAY } from './constants';
 import '../styles/materialize.min.css';
 import '../styles/style.css';
@@ -26,7 +26,19 @@ const renderUsers = name => {
 };
 
 const fetchUsers = query =>
-    fromFetch(getSearchUrl(query)).pipe(
+    fromFetch(getUsersSearchUrl(query)).pipe(
+        switchMap(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                return of({ error: true, message: `Error ${response.status}` });
+            }
+        }),
+        catchError(err => of({ error: true, message: err.message }))
+    );
+
+const fetchRepos = user =>
+    fromFetch(getReposSearchUrl(user)).pipe(
         switchMap(response => {
             if (response.ok) {
                 return response.json();
@@ -42,19 +54,25 @@ const inputObservable = fromEvent(searchBox, 'input').pipe(
     map(event => event.target.value),
     distinctUntilChanged(),
     tap(() => (resultsList.innerHTML = '')),
-    switchMap(query => (query ? fetchUsers(query) : of({ error: true })))
+    switchMap(query => fetchUsers(query.trim())),
+    map(data => {
+        console.log(data.items);
+        return data.items;
+    }),
+    switchMap(users => combineLatest(users.map(user => fetchRepos(user.login))))
 );
 
 inputObservable.subscribe(data => {
+    console.log(data);
     let searchValue = '';
 
-    if (data.total_count === 0) {
-        searchValue = 'There are no such users';
-    } else if (!data.error) {
-        searchValue = data.items.map(item => item.login);
-    } else {
-        searchValue = 'You must enter something to search';
-    }
+    // if (data.total_count === 0) {
+    //     searchValue = 'There are no such users';
+    // } else if (!data.error) {
+    //     searchValue = data.items.map(item => item.login);
+    // } else {
+    //     searchValue = 'You must enter something to search';
+    // }
 
-    renderUsers(searchValue);
+    // renderUsers(searchValue);
 });
