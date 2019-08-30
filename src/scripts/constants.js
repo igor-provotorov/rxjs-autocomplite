@@ -1,7 +1,5 @@
-const TOKEN = '241d6e90fa6c4cc19b6d26c3a393a4fc8826b651';
-const BASE_SEARCH_URL = 'https://api.github.com/';
-const HALF_SECOND_DELAY = 500;
+const TOKEN = '0b73f0ee01671cd3114316ff474a34dd0d0dc04d';
 const PER_PAGE = 10;
-const MAX_REPOS_PER_PAGE = 100;
+const BASE_SEARCH_URL = 'https://api.github.com/search/users?q=';
 
-export { TOKEN, PER_PAGE, BASE_SEARCH_URL, HALF_SECOND_DELAY, MAX_REPOS_PER_PAGE };
+export { TOKEN, PER_PAGE, BASE_SEARCH_URL };
