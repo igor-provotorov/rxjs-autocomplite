@@ -2,7 +2,7 @@ import { fromEvent, of, forkJoin } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import { debounceTime, distinctUntilChanged, map, switchMap, tap, catchError, concatMap } from 'rxjs/operators';
 
-import { getUsersSearchUrl, getReposSearchUrl } from './helpers/getSearchUrl';
+import { getSearchUrl } from './helpers/getSearchUrl';
 import { HALF_SECOND_DELAY } from './constants';
 import '../styles/materialize.min.css';
 import '../styles/style.css';
