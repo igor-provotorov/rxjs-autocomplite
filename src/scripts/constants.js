@@ -1,4 +1,4 @@
-const TOKEN = '241d6e90fa6c4cc19b6d26c3a393a4fc8826b651';
+const TOKEN = '787f0a72229d13d7735f502e08fc8cbad9808373';
 const BASE_SEARCH_URL = 'https://api.github.com/';
 const HALF_SECOND_DELAY = 500;
 const PER_PAGE = 10;
