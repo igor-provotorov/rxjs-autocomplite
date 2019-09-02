@@ -5,7 +5,6 @@ const getUsersSearchUrl = searchValue => {
 };
 
 const getReposSearchUrl = user => {
-    console.log(user);
     return `${BASE_SEARCH_URL}users/${user}/repos?access_token=${TOKEN}&per_page=${MAX_REPOS_PER_PAGE}`;
 };
 
