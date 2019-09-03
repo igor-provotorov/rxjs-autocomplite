@@ -1,6 +1,6 @@
-import { fromEvent, of } from 'rxjs';
+import { fromEvent, of, forkJoin } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
-import { debounceTime, distinctUntilChanged, map, switchMap, tap, catchError } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, switchMap, tap, catchError, concatMap } from 'rxjs/operators';
 
 import { getSearchUrl } from './helpers/getSearchUrl';
 import { HALF_SECOND_DELAY } from './constants';
@@ -10,51 +10,66 @@ import '../styles/style.css';
 const searchBox = document.querySelector('input');
 const resultsList = document.querySelector('ul');
 
-const renderUsers = name => {
-    const make = name => {
-        const node = document.createElement('li');
-        const textnode = document.createTextNode(name);
-        node.appendChild(textnode);
-        resultsList.appendChild(node);
-    };
-
-    if (Array.isArray(name)) {
-        name.forEach(userName => make(userName));
-    } else {
-        make(name);
-    }
+const renderExeption = name => {
+    const node = document.createElement('li');
+    node.innerText = `${name}`;
+    resultsList.appendChild(node);
 };
 
-const fetchUsers = query =>
-    fromFetch(getSearchUrl(query)).pipe(
-        switchMap(response => {
-            if (response.ok) {
-                return response.json();
-            } else {
-                return of({ error: true, message: `Error ${response.status}` });
-            }
-        }),
+const renderUsersWithRepos = users => {
+    const make = ({ login, reposCount }) => {
+        const liElement = document.createElement('li');
+        const spanElement = document.createElement('span');
+        liElement.innerText = `${login}`;
+        spanElement.innerText = `${reposCount} repositories`;
+        liElement.appendChild(spanElement);
+        resultsList.appendChild(liElement);
+    };
+
+    users.forEach(user => make(user));
+};
+
+const fetchUsers = query => {
+    if (query.trim() === '') {
+        resultsList.innerHTML = '';
+        renderExeption('You must enter something to search');
+        return [];
+    }
+    return fromFetch(getUsersSearchUrl(query)).pipe(
+        switchMap(response => response.json()),
         catchError(err => of({ error: true, message: err.message }))
     );
+};
+
+const fetchRepositories = user =>
+    fromFetch(getReposSearchUrl(user)).pipe(
+        switchMap(response => response.json()),
+        catchError(err => of({ error: true, message: err.message }))
+    );
+
+const checkEmptyUsers = users => {
+    if (users.total_count === 0) {
+        resultsList.innerHTML = '';
+        renderExeption('There are no such users');
+    }
+    return users.items;
+};
 
 const inputObservable = fromEvent(searchBox, 'input').pipe(
     debounceTime(HALF_SECOND_DELAY),
     map(event => event.target.value),
     distinctUntilChanged(),
-    tap(() => (resultsList.innerHTML = '')),
-    switchMap(query => (query ? fetchUsers(query) : of({ error: true })))
+    tap(() => (resultsList.innerHTML = 'Loading...')),
+    switchMap(query => fetchUsers(query.trim())),
+    map(users => checkEmptyUsers(users)),
+    switchMap(
+        users => forkJoin(users.map(user => fetchRepositories(user.login))),
+        (users, repos) => users.map((user, index) => ({ login: user.login, reposCount: repos[index].length }))
+    ),
+    tap(() => (resultsList.innerHTML = ''))
 );
 
-inputObservable.subscribe(data => {
-    let searchValue = '';
-
-    if (data.total_count === 0) {
-        searchValue = 'There are no such users';
-    } else if (!data.error) {
-        searchValue = data.items.map(item => item.login);
-    } else {
-        searchValue = 'You must enter something to search';
-    }
-
-    renderUsers(searchValue);
+inputObservable.subscribe({
+    next: data => renderUsersWithRepos(data),
+    error: error => console.log(error.message),
 });
