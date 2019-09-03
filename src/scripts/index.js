@@ -10,7 +10,7 @@ import '../styles/style.css';
 const searchBox = document.querySelector('input');
 const resultsList = document.querySelector('ul');
 
-const renderExeption = name => {
+const renderException = name => {
     const node = document.createElement('li');
     node.innerText = `${name}`;
     resultsList.appendChild(node);
@@ -32,7 +32,7 @@ const renderUsersWithRepos = users => {
 const fetchUsers = query => {
     if (query.trim() === '') {
         resultsList.innerHTML = '';
-        renderExeption('You must enter something to search');
+        renderException('You must enter something to search');
         return [];
     }
     return fromFetch(getUsersSearchUrl(query)).pipe(
@@ -50,7 +50,7 @@ const fetchRepositories = user =>
 const checkEmptyUsers = users => {
     if (users.total_count === 0) {
         resultsList.innerHTML = '';
-        renderExeption('There are no such users');
+        renderException('There are no such users');
     }
     return users.items;
 };
