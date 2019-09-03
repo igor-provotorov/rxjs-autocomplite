@@ -1,8 +1,8 @@
 import { fromEvent, of, forkJoin } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
-import { debounceTime, distinctUntilChanged, map, switchMap, tap, catchError, concatMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, switchMap, tap, catchError } from 'rxjs/operators';
 
-import { getSearchUrl } from './helpers/getSearchUrl';
+import { getUsersSearchUrl, getReposSearchUrl } from './helpers/getSearchUrl';
 import { HALF_SECOND_DELAY } from './constants';
 import '../styles/materialize.min.css';
 import '../styles/style.css';
@@ -64,7 +64,7 @@ const inputObservable = fromEvent(searchBox, 'input').pipe(
     map(users => checkEmptyUsers(users)),
     switchMap(
         users => forkJoin(users.map(user => fetchRepositories(user.login))),
-        (users, repos) => users.map((user, index) => ({ login: user.login, reposCount: repos[index].length }))
+        (users, repos) => users.map((user, index) => ({ login: user.login, reposCount: repos[index].public_repos }))
     ),
     tap(() => (resultsList.innerHTML = ''))
 );
